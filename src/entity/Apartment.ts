@@ -1,4 +1,4 @@
-import {Column, Entity, PrimaryGeneratedColumn} from "typeorm";
+import {Column, CreateDateColumn, Entity, PrimaryGeneratedColumn} from "typeorm";
 
 @Entity()
 export class Apartment {
@@ -8,9 +8,12 @@ export class Apartment {
     @Column()
     title: string;
 
-    @Column()
+    @Column({type: "bigint"})
     price: number;
 
-    @Column()
+    @Column({unique: true})
     externalId: string;
+
+    @CreateDateColumn({type: "date"})
+    date: Date
 }

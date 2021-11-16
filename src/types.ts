@@ -1,5 +1,5 @@
 export type Apartment = {
-    id: string;
+    externalId: string;
     price: number;
     title: string;
 }

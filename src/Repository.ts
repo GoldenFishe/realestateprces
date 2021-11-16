@@ -1,27 +1,40 @@
-import {createConnection} from "typeorm";
+import {Connection, createConnection} from "typeorm";
 import {Apartment} from "./entity/Apartment";
+import {Apartment as ApartmentType} from "./types";
 
+//Singleton
 export class Repository {
-    async saveApartment(data: Apartment) {
-        const repository = await Repository.getRepository();
+    private static instance: Repository;
+    private connection: Connection;
+
+    private constructor() {
+
+    }
+
+    static Instance() {
+        Repository.instance = Repository.instance ? Repository.instance : new Repository();
+        return this.instance;
+    }
+    async saveApartment(data: ApartmentType) {
+        const repository = await this.getRepository();
         if (repository) {
-            return repository.save(data);
+            const apartment = repository.create(data)
+            return repository.save(apartment);
         } else {
             throw new Error("Can't get repository")
         }
     }
 
     async getAllApartment() {
-        const repository = await Repository.getRepository();
+        const repository = await this.getRepository();
         return repository.find();
     }
 
-    private static async getRepository() {
-        try {
-            const connection = await createConnection()
-            return connection.getRepository(Apartment);
-        } catch (err) {
-            throw err;
-        }
+    async createConnection() {
+        this.connection = await createConnection();
+    }
+
+    private getRepository() {
+        return this.connection.getRepository(Apartment);
     }
 }

@@ -1,12 +1,12 @@
 import puppeteer, {ElementHandle, Page} from "puppeteer";
-import fs from 'fs/promises';
 import "reflect-metadata";
 
 import {Apartment} from "./types";
+import {Repository} from "./Repository";
 
 const URL = 'https://www.cian.ru/kupit-kvartiru/'
 let CURRENT_PAGE = 1;
-const MAX_PAGE = 5;
+const MAX_PAGE = 50;
 
 async function application() {
     const browser = await puppeteer.launch();
@@ -22,21 +22,19 @@ async function application() {
         await page.waitForTimeout(1000);
     }
 
-    console.log(apartments);
-    const data = {[getDate()]: apartments}
-
-    saveData(JSON.stringify(data));
+    saveData(apartments);
 
     await browser.close();
 }
 
 application();
 
-async function saveData(data: string) {
-    try {
-        await fs.appendFile('file.json', data);
-    } catch (err) {
-        console.log(err);
+async function saveData(apartments: Apartment[]) {
+    const repository = Repository.Instance();
+    await repository.createConnection();
+    console.log(repository);
+    for (let apartment of apartments) {
+        await repository.saveApartment(apartment);
     }
 }
 
@@ -55,8 +53,8 @@ async function getDataFromApartment(apartment: ElementHandle): Promise<Apartment
     const getIdPromise = getId(apartment);
     const getPricePromise = getPrice(apartment);
     const getTitlePromise = getTitle(apartment);
-    const [id, price, title] = await Promise.all([getIdPromise, getPricePromise, getTitlePromise])
-    return {id, price, title};
+    const [externalId, price, title] = await Promise.all([getIdPromise, getPricePromise, getTitlePromise])
+    return {externalId, price, title};
 }
 
 async function getId(apartment: ElementHandle) {
@@ -90,15 +88,6 @@ async function getTitle(apartment: ElementHandle) {
         throw new Error(`Can't get price: ${title}`)
     }
 }
-
-function getDate() {
-    const date = new Date();
-    const monthDate = date.getDate();
-    const month = date.getMonth();
-    const year = date.getFullYear();
-    return `${monthDate}-${month}-${year}`;
-}
-
 
 async function goToNextPage(page: Page) {
     const pagination = await page?.$x(`//*[@data-name="Pagination"]//a[text() = '${CURRENT_PAGE + 1}']`);
