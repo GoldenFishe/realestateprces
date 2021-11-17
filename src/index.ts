@@ -1,26 +1,30 @@
 import puppeteer, {ElementHandle, Page} from "puppeteer";
 import "reflect-metadata";
 
-import {Apartment} from "./types";
+import {CianApartment} from "./classes/CianApartment";
 import {Repository} from "./Repository";
+import {Flat} from "./classes/Apartment";
 
 const URL = 'https://www.cian.ru/kupit-kvartiru/'
 let CURRENT_PAGE = 1;
-const MAX_PAGE = 50;
+const MAX_PAGE = 2;
 
 async function application() {
     const browser = await puppeteer.launch();
     const page = await browser.newPage();
     await page.goto(URL, {waitUntil: "domcontentloaded"});
 
-    const apartments: Apartment[] = [];
+    const apartments: Flat[] = [];
 
+    console.log(`Current page: ${CURRENT_PAGE}`);
     for (let i = CURRENT_PAGE; i < MAX_PAGE; i++) {
         const a = await getApartments(page)
         apartments.push(...a)
         await goToNextPage(page);
         await page.waitForTimeout(1000);
     }
+
+    console.log(`Total apartments: ${apartments.length}`)
 
     saveData(apartments);
 
@@ -29,10 +33,10 @@ async function application() {
 
 application();
 
-async function saveData(apartments: Apartment[]) {
+async function saveData(apartments: Flat[]) {
     const repository = Repository.Instance();
     await repository.createConnection();
-    console.log(repository);
+
     for (let apartment of apartments) {
         await repository.saveApartment(apartment);
     }
@@ -41,7 +45,7 @@ async function saveData(apartments: Apartment[]) {
 async function getApartments(page: Page) {
     const apartmentSelector = '[data-name="CardComponent"]';
     const apartments = await page.$$(apartmentSelector);
-    const getDataPromises: Promise<Apartment>[] = [];
+    const getDataPromises: Promise<Flat>[] = [];
     for (let apartment of apartments) {
         getDataPromises.push(getDataFromApartment(apartment))
     }
@@ -49,50 +53,16 @@ async function getApartments(page: Page) {
     return await Promise.all(getDataPromises);
 }
 
-async function getDataFromApartment(apartment: ElementHandle): Promise<Apartment> {
-    const getIdPromise = getId(apartment);
-    const getPricePromise = getPrice(apartment);
-    const getTitlePromise = getTitle(apartment);
-    const [externalId, price, title] = await Promise.all([getIdPromise, getPricePromise, getTitlePromise])
-    return {externalId, price, title};
-}
-
-async function getId(apartment: ElementHandle) {
-    const idSelector = '[data-name="LinkArea"] a[href*="flat/"]';
-    const id = await apartment.$eval(idSelector, idElement => idElement.getAttribute("href"));
-    if (id) {
-        const formatId = (id: string) => (/(?<=\/)\d+(?=\/$)/.exec(id) as RegExpExecArray)[0] as string;
-        return formatId(id);
-    } else {
-        throw new Error(`Can't get id: ${id}`)
-    }
-}
-
-async function getPrice(apartment: ElementHandle) {
-    const priceSelector = '[data-mark="MainPrice"]';
-    const price = await apartment.$eval(priceSelector, priceElement => priceElement.textContent);
-    if (price) {
-        const trimmedPrice = price.replace(/\s/gm, '')
-        return Number.parseInt(trimmedPrice)
-    } else {
-        throw new Error(`Can't get price: ${price}`)
-    }
-}
-
-async function getTitle(apartment: ElementHandle) {
-    const titleSelector = '[data-mark="OfferTitle"]';
-    const title = await apartment.$eval(titleSelector, priceElement => priceElement.textContent);
-    if (title) {
-        return title
-    } else {
-        throw new Error(`Can't get price: ${title}`)
-    }
+async function getDataFromApartment(apartmentElementHandle: ElementHandle): Promise<Flat> {
+    const apartment = new CianApartment(apartmentElementHandle);
+    return await apartment.getApartment();
 }
 
 async function goToNextPage(page: Page) {
     const pagination = await page?.$x(`//*[@data-name="Pagination"]//a[text() = '${CURRENT_PAGE + 1}']`);
-    const [p] = pagination
-    console.log(await p?.evaluate(e => e.textContent));
+    const [p] = pagination;
+    const pageNumber = await p?.evaluate(e => e.textContent)
+    console.log(`Current page: ${pageNumber}`);
     await Promise.all([
         p?.click(),
         page.waitForNavigation()

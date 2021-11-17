@@ -6,7 +6,7 @@
   "password": "666666",
   "database": "realestateprices",
   "synchronize": true,
-  "logging": true,
+  "logging": false,
   "entities": [
     "src/entity/**/*.{ts,js}"
   ],

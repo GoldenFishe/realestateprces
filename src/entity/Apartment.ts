@@ -11,8 +11,14 @@ export class Apartment {
     @Column({type: "bigint"})
     price: number;
 
-    @Column({unique: true})
+    @Column()
     externalId: string;
+
+    @Column()
+    city: string;
+
+    @Column()
+    district: string;
 
     @CreateDateColumn({type: "date"})
     date: Date

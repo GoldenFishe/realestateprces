@@ -1,6 +1,6 @@
 import {Connection, createConnection} from "typeorm";
 import {Apartment} from "./entity/Apartment";
-import {Apartment as ApartmentType} from "./types";
+import {Flat} from "./classes/Apartment";
 
 //Singleton
 export class Repository {
@@ -15,7 +15,7 @@ export class Repository {
         Repository.instance = Repository.instance ? Repository.instance : new Repository();
         return this.instance;
     }
-    async saveApartment(data: ApartmentType) {
+    async saveApartment(data: Flat) {
         const repository = await this.getRepository();
         if (repository) {
             const apartment = repository.create(data)
