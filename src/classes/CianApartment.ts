@@ -1,4 +1,5 @@
 import {ElementHandle} from "puppeteer";
+
 import {Apartment} from "./Apartment";
 
 export class CianApartment extends Apartment {
