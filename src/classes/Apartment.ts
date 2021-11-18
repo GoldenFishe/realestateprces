@@ -7,6 +7,8 @@ export type Flat = {
     title: string;
     city: string;
     district: string;
+    rooms: number;
+    square: number;
 }
 
 export abstract class Apartment {
@@ -23,4 +25,8 @@ export abstract class Apartment {
     protected abstract getCity(): Promise<string>
 
     protected abstract getDistrict(): Promise<string>
+
+    protected abstract getRooms(): Promise<number>
+
+    protected abstract getSquare(): Promise<number>
 }

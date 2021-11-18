@@ -16,8 +16,10 @@ export class CianApartment extends Apartment {
         const getTitlePromise = this.getTitle();
         const getCityPromise = this.getCity();
         const getDistrictPromise = this.getDistrict();
-        const [externalId, price, title, city, district] = await Promise.all([getIdPromise, getPricePromise, getTitlePromise, getCityPromise, getDistrictPromise])
-        return {externalId, price, title, city, district};
+        const getRoomsPromise = this.getRooms();
+        const getSquarePromise = this.getSquare();
+        const [externalId, price, title, city, district, rooms, square] = await Promise.all([getIdPromise, getPricePromise, getTitlePromise, getCityPromise, getDistrictPromise, getRoomsPromise, getSquarePromise])
+        return {externalId, price, title, city, district, rooms, square};
     }
 
     protected async getId() {
@@ -43,7 +45,7 @@ export class CianApartment extends Apartment {
     }
 
     protected async getTitle() {
-        const titleSelector = '[data-mark="OfferTitle"]';
+        const titleSelector = '[data-name="TitleComponent"]';
         const title = await this.apartment.$eval(titleSelector, priceElement => priceElement.textContent);
         if (title) {
             return title
@@ -70,5 +72,25 @@ export class CianApartment extends Apartment {
         } else {
             throw new Error(`Can't get district: ${district}`)
         }
+    }
+
+    protected async getRooms() {
+        const title = await this.getTitle();
+        return new Promise<number>(resolve => {
+            const rooms = (/\d+(?=-комн\.)/.exec(title))
+            if (rooms && rooms[0]) {
+                resolve(Number.parseInt(rooms[0]))
+            } else {
+                resolve(0)
+            }
+        })
+    }
+
+    protected async getSquare() {
+        const title = await this.getTitle();
+        return new Promise<number>(resolve => {
+            const square = (/\d+,?\d*(?=\sм²)/.exec(title) as RegExpExecArray)[0] as string;
+            resolve(Number.parseInt(square))
+        })
     }
 }

@@ -7,7 +7,7 @@ import {Flat} from "./classes/Apartment";
 
 const URL = 'https://www.cian.ru/kupit-kvartiru/'
 let CURRENT_PAGE = 1;
-const MAX_PAGE = 2;
+const MAX_PAGE = 50;
 
 async function application() {
     const browser = await puppeteer.launch();

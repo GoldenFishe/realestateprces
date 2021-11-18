@@ -20,6 +20,12 @@ export class Apartment {
     @Column()
     district: string;
 
+    @Column()
+    rooms: number;
+
+    @Column()
+    square: number;
+
     @CreateDateColumn({type: "date"})
     date: Date
 }
